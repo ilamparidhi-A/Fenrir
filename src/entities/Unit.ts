@@ -7,6 +7,7 @@ import {
   LANE_SCALE_MIN,
   PALETTE,
   PLAYER_CASTLE_X,
+  SPRITE_DISPLAY_SCALE,
   laneY,
 } from '../config/GameConfig';
 import { Vfx } from '../systems/Vfx';
@@ -109,7 +110,7 @@ export class Unit extends Phaser.GameObjects.Container {
     if (scene.textures.exists(spriteKey)) {
       // Art is authored facing right; mirror it for the enemy side.
       const img = scene.add.image(0, 0, spriteKey).setOrigin(0.5, 1);
-      img.setScale(def.height / img.height);
+      img.setScale((def.height * SPRITE_DISPLAY_SCALE) / img.height);
       img.setFlipX(team === 'enemy');
       this.sprite = img;
       this.bodyRect = null;

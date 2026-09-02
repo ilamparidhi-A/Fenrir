@@ -46,6 +46,15 @@ export function laneY(lane: number): number {
 /** The champion always takes the frontmost rank so it is never buried. */
 export const HERO_LANE = LANE_COUNT - 1;
 
+/**
+ * How large sprites render relative to a unit's logical height. Collision,
+ * spacing and reach are unaffected — this only changes how big the art looks.
+ *
+ * Detailed art often needs more pixels than the logical size to stay readable;
+ * raise this rather than changing `def.height`, which would alter balance.
+ */
+export const SPRITE_DISPLAY_SCALE = 1;
+
 /** Castle positions along the lane. */
 export const PLAYER_CASTLE_X = 110;
 export const ENEMY_CASTLE_X = WORLD_WIDTH - 110;

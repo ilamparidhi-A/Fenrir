@@ -53,17 +53,34 @@ upgrade you can do later, not a prerequisite.
 **Paste this verbatim into every unit prompt.** Do not paraphrase it between
 units — the drift you're preventing comes from small wording changes.
 
-> Dark Norse low-fantasy game sprite. Full-body side profile, facing right,
-> standing on flat ground. Flat vector-style shading with clean readable
-> silhouette, minimal texture detail, no outline glow. Muted desaturated palette:
-> cold blue-greys, iron black, weathered leather brown, one restrained accent
-> colour. Single soft light source from upper left. Grounded and gritty, not
-> heroic or cartoonish. Centred, full body visible head to feet, transparent
-> background. No text, no logo, no border, no background scenery.
+> 2D game sprite for a side-scrolling battle game. **Strict orthographic side
+> view — the body, hips, shoulders and feet all face right in pure profile, NOT
+> three-quarter, NOT angled toward the viewer.** Dark Norse low-fantasy.
+> **Simplified flat cel-shaded illustration with 3-4 shading tones only —
+> readable as a clear silhouette at 64 pixels tall. Not painterly, not
+> photorealistic, minimal fine texture detail.** Muted desaturated palette: cold
+> blue-greys, iron black, weathered leather brown, one restrained accent colour.
+> Single soft light source from upper left. Grounded and gritty, not heroic or
+> cartoonish. Neutral walking stance, feet close together, NOT a wide combat
+> stance. Full body head to feet, **feet flush against the very bottom edge of
+> the canvas with no margin below**. **Fully transparent background (alpha
+> channel) — not white, not a checkerboard.** No text, no logo, no border, no
+> ground shadow, no background scenery.
 
 **Generate one unit first** — the Militia. Once it looks right, feed it back as a
 reference image for every subsequent unit ("match the style of this reference").
 That single step does more for consistency than anything else.
+
+### The 64-pixel test
+
+Before accepting any sprite, shrink it to 64 pixels tall and look at it. If you
+cannot immediately tell what the unit is and what it is holding, the art is
+over-rendered — no matter how good it looks at full size. Concept-art detail is
+actively harmful at sprite scale; silhouette and colour blocking are what read.
+
+If a generator keeps returning three-quarter views, adding "profile view like an
+Egyptian wall painting" or "perfectly flat side elevation, like a technical
+drawing" tends to force it.
 
 ---
 
