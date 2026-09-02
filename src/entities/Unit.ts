@@ -11,7 +11,7 @@ import {
   laneY,
 } from '../config/GameConfig';
 import { Vfx } from '../systems/Vfx';
-import { unitSpriteKey } from '../config/Assets';
+import { unitAnimKey, unitAsset, unitSpriteKey, type UnitAnimState } from '../config/Assets';
 import {
   counterMultiplier,
   EFFECTIVE_THRESHOLD,
@@ -61,7 +61,10 @@ export class Unit extends Phaser.GameObjects.Container {
   private readonly displayTint: number;
   private readonly teamColor: number;
   /** Real art, when it has landed for this unit. */
-  private readonly sprite: Phaser.GameObjects.Image | null;
+  private readonly sprite: Phaser.GameObjects.Sprite | null;
+  /** True when the art is an animated pack sheet rather than a single pose. */
+  private readonly animated: boolean;
+  private animState: UnitAnimState | null = null;
   /** Placeholder body, used only while `sprite` is null. */
   private readonly bodyRect: Phaser.GameObjects.Rectangle | null;
   private readonly weapon: Phaser.GameObjects.Rectangle | null;
@@ -109,14 +112,16 @@ export class Unit extends Phaser.GameObjects.Container {
     const spriteKey = unitSpriteKey(def.id);
     if (scene.textures.exists(spriteKey)) {
       // Art is authored facing right; mirror it for the enemy side.
-      const img = scene.add.image(0, 0, spriteKey).setOrigin(0.5, 1);
+      const img = scene.add.sprite(0, 0, spriteKey).setOrigin(0.5, 1);
       img.setScale((def.height * SPRITE_DISPLAY_SCALE) / img.height);
       img.setFlipX(team === 'enemy');
       this.sprite = img;
+      this.animated = !!unitAsset(def.id)?.anims;
       this.bodyRect = null;
       this.weapon = null;
     } else {
       this.sprite = null;
+      this.animated = false;
       this.bodyRect = scene.add
         .rectangle(0, -def.height / 2, w, def.height, this.displayTint)
         .setStrokeStyle(def.elite ? 3 : 2, def.elite ? 0xf2e6c8 : this.teamColor, def.elite ? 1 : 0.9);
@@ -179,6 +184,17 @@ export class Unit extends Phaser.GameObjects.Container {
 
   private get moveSpeed(): number {
     return this.def.speed * (1 + (this.isBuffed ? this.buffAmount * BUFF_SPEED_SCALE : 0));
+  }
+
+  /** Switch animation state, if this unit has an animated sheet at all. */
+  private setAnim(state: UnitAnimState): void {
+    if (!this.sprite || !this.animated || this.animState === state) return;
+
+    const key = unitAnimKey(this.def.id, state);
+    if (!this.scene.anims.exists(key)) return;
+
+    this.animState = state;
+    this.sprite.play(key, true);
   }
 
   /** Single place that decides body appearance, sprite or placeholder alike. */
@@ -267,6 +283,21 @@ export class Unit extends Phaser.GameObjects.Container {
   protected die(): void {
     if (this.isDead) return;
     this.isDead = true;
+
+    // A pack with a death animation gets to play it; placeholders tumble.
+    const hasDeathAnim = this.animated && this.scene.anims.exists(unitAnimKey(this.def.id, 'die'));
+    if (hasDeathAnim) {
+      this.setAnim('die');
+      this.scene.tweens.add({
+        targets: this,
+        alpha: 0,
+        delay: 420,
+        duration: 260,
+        onComplete: () => this.destroy(),
+      });
+      return;
+    }
+
     this.scene.tweens.add({
       targets: this,
       alpha: 0,
@@ -315,26 +346,36 @@ export class Unit extends Phaser.GameObjects.Container {
       const limit = this.retreatLimit;
       const next = this.x - this.facing * this.moveSpeed * (dtMs / 1000);
       this.x = this.facing > 0 ? Math.max(limit, next) : Math.min(limit, next);
+      this.setAnim('walk');
       return;
     }
 
     const target = this.findTarget(ctx.enemies);
     if (target) {
+      this.setAnim('attack');
       this.tryAttack(target, ctx);
       return;
     }
 
     const castle = ctx.enemyCastle;
     if (!castle.isDestroyed && this.distanceTo(castle.x) <= this.def.attackRange) {
+      this.setAnim('attack');
       this.tryAttack(castle, ctx);
       return;
     }
 
-    if (this.stance === 'hold') return;
-
-    if (!this.isBlocked(ctx.allies as readonly Unit[])) {
-      this.x += this.facing * this.moveSpeed * (dtMs / 1000);
+    if (this.stance === 'hold') {
+      this.setAnim('idle');
+      return;
     }
+
+    if (this.isBlocked(ctx.allies as readonly Unit[])) {
+      this.setAnim('idle');
+      return;
+    }
+
+    this.x += this.facing * this.moveSpeed * (dtMs / 1000);
+    this.setAnim('walk');
   }
 
   private distanceTo(x: number): number {

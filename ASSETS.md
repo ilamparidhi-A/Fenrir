@@ -180,6 +180,55 @@ and the current vector placeholders already follow it.
 
 ---
 
+## Buying a unit pack
+
+**Recommended split:** buy a pack for the line units, generate the rest. A single
+artist's pack gives you a whole roster that already shares a world, a scale, a
+camera angle and a light source — which is precisely the thing AI is worst at and
+the thing that matters most across seventeen units. Then use AI where it is
+strong: parallax backdrops, one-off bosses, key art, the portal thumbnail, UI.
+
+### Where to look
+
+- **CraftPix.net** — has fantasy troop packs built specifically for side-view
+  battle and tower-defence games, which is exactly this genre. Closest fit.
+- **itch.io** — search *"2D fantasy character sprite pack side view"*,
+  *"medieval army spritesheet"*, *"side scroller fantasy warriors"*.
+- **GameDev Market** — smaller catalogue, generally high quality.
+
+### Checklist before buying
+
+| Check | Why |
+| --- | --- |
+| **Side view, not 3/4 or top-down** | RPG packs are usually 3/4 and unusable here. Platformer packs are side-view and fine. |
+| **One pack covers 8+ units** | Buying eight units from eight packs recreates the consistency problem you paid to avoid. |
+| **Includes idle / walk / attack / death** | The engine drives all four. Missing death is survivable; missing walk is not. |
+| **Uniform-grid spritesheet or per-frame PNGs** | The loader takes uniform grids. Atlas + JSON is a small addition if a pack you love ships that instead — ask me. |
+| **Licence allows commercial use and redistribution in a compiled game** | We ship on portals *and* an app store. Check whether attribution is required. |
+| **Transparent background** | Non-negotiable. |
+| **Source frames ≥ 128px tall** | Anything smaller looks soft once scaled. Larger is fine — we scale down. |
+
+Budget is roughly **$15–60** for a good pack, against $1,000–3,000 to commission
+the same roster. Expect to spend an hour looking; expect the licence page to be
+the deciding factor more often than the art.
+
+### On "generic"
+
+The usual objection to packs is that other games use the same art. Two answers.
+First, it matters far less on a portal than people assume — players judge the
+thumbnail and the first thirty seconds. Second, we already tint every unit toward
+its team colour, so a pack can be palette-shifted toward the Norse direction and
+stop looking like its source. Distinctiveness can come later, from the hero,
+bosses and backdrops — which is exactly the work worth generating or commissioning.
+
+### If the pack has fewer units than we need
+
+The engine mirrors sprites for the enemy side, so **one faction can serve both**
+armies. A pack with 6 units still covers a lot: reuse across factions, and lean
+on tinting plus the damage-type stripes for differentiation until the roster fills.
+
+---
+
 ## Suggested order
 
 1. **Militia** alone — establish the style, keep it as the reference image

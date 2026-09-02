@@ -10,9 +10,20 @@
  *   2. Uncomment or add its line in UNIT_SPRITES below
  * That is the whole integration step.
  */
+/** Animation states a unit can be in. Packs almost always ship these four. */
+export type UnitAnimState = 'idle' | 'walk' | 'attack' | 'die';
+
 export interface SpriteAsset {
   key: string;
   path: string;
+  /**
+   * Present when the file is a uniform-grid spritesheet rather than one image.
+   * This is what nearly every itch.io / CraftPix pack ships.
+   */
+  sheet?: { frameWidth: number; frameHeight: number };
+  /** Inclusive first/last frame index per state, e.g. `{ walk: [0, 7] }`. */
+  anims?: Partial<Record<UnitAnimState, readonly [number, number]>>;
+  frameRate?: number;
 }
 
 /** Texture key for a unit's sprite. Units look themselves up by this. */
@@ -61,3 +72,29 @@ export const BIOME_LAYERS: readonly SpriteAsset[] = [
 ];
 
 export const ALL_ASSETS: readonly SpriteAsset[] = [...UNIT_SPRITES, ...BIOME_LAYERS];
+
+/** The manifest entry for a unit, if it has one. */
+export function unitAsset(unitId: string): SpriteAsset | undefined {
+  const key = unitSpriteKey(unitId);
+  return UNIT_SPRITES.find((a) => a.key === key);
+}
+
+/** Phaser animation key for one state of one unit. */
+export function unitAnimKey(unitId: string, state: UnitAnimState): string {
+  return unitSpriteKey(unitId) + '-' + state;
+}
+
+/**
+ * Example of a fully animated pack entry, for reference when wiring one up:
+ *
+ *   {
+ *     key: unitSpriteKey('militia'),
+ *     path: 'assets/units/militia.png',
+ *     sheet: { frameWidth: 128, frameHeight: 128 },
+ *     anims: { idle: [0, 3], walk: [8, 15], attack: [16, 21], die: [24, 29] },
+ *     frameRate: 10,
+ *   }
+ *
+ * A single static PNG needs only `key` and `path` — the unit then renders one
+ * pose and picks up the engine's procedural lunge, flash and tumble instead.
+ */
