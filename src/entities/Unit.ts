@@ -10,6 +10,7 @@ import {
   laneY,
 } from '../config/GameConfig';
 import { Vfx } from '../systems/Vfx';
+import { unitSpriteKey } from '../config/Assets';
 import {
   counterMultiplier,
   EFFECTIVE_THRESHOLD,
@@ -58,8 +59,12 @@ export class Unit extends Phaser.GameObjects.Container {
   /** def.tint blended toward the team colour, so you can read friend from foe at a glance. */
   private readonly displayTint: number;
   private readonly teamColor: number;
-  private readonly bodyRect: Phaser.GameObjects.Rectangle;
-  private readonly weapon: Phaser.GameObjects.Rectangle;
+  /** Real art, when it has landed for this unit. */
+  private readonly sprite: Phaser.GameObjects.Image | null;
+  /** Placeholder body, used only while `sprite` is null. */
+  private readonly bodyRect: Phaser.GameObjects.Rectangle | null;
+  private readonly weapon: Phaser.GameObjects.Rectangle | null;
+  private flashing = false;
   private readonly hpFill: Phaser.GameObjects.Rectangle;
   private readonly hpBarWidth: number;
   /** Rank scale. Back ranks sit slightly smaller so overlap reads as depth. */
@@ -100,18 +105,30 @@ export class Unit extends Phaser.GameObjects.Container {
     // as standing at different depths rather than clipping through each other.
     const shadow = scene.add.ellipse(0, 3, def.radius * 2.6, 9, 0x000000, 0.38);
 
-    this.bodyRect = scene.add
-      .rectangle(0, -def.height / 2, w, def.height, this.displayTint)
-      .setStrokeStyle(def.elite ? 3 : 2, def.elite ? 0xf2e6c8 : this.teamColor, def.elite ? 1 : 0.9);
+    const spriteKey = unitSpriteKey(def.id);
+    if (scene.textures.exists(spriteKey)) {
+      // Art is authored facing right; mirror it for the enemy side.
+      const img = scene.add.image(0, 0, spriteKey).setOrigin(0.5, 1);
+      img.setScale(def.height / img.height);
+      img.setFlipX(team === 'enemy');
+      this.sprite = img;
+      this.bodyRect = null;
+      this.weapon = null;
+    } else {
+      this.sprite = null;
+      this.bodyRect = scene.add
+        .rectangle(0, -def.height / 2, w, def.height, this.displayTint)
+        .setStrokeStyle(def.elite ? 3 : 2, def.elite ? 0xf2e6c8 : this.teamColor, def.elite ? 1 : 0.9);
 
-    this.weapon = scene.add.rectangle(
-      this.facing * (def.radius + 5),
-      -def.height * 0.62,
-      10,
-      4,
-      0xe8e2d4,
-      0.9
-    );
+      this.weapon = scene.add.rectangle(
+        this.facing * (def.radius + 5),
+        -def.height * 0.62,
+        10,
+        4,
+        0xe8e2d4,
+        0.9
+      );
+    }
 
     const barBg = scene.add.rectangle(0, -def.height - 10, this.hpBarWidth, 5, 0x000000, 0.65);
     this.hpFill = scene.add
@@ -119,7 +136,12 @@ export class Unit extends Phaser.GameObjects.Container {
       .setOrigin(0, 0.5);
     // -----------------------------------------------------------------------
 
-    this.add([shadow, this.bodyRect, this.weapon, barBg, this.hpFill]);
+    const parts: Phaser.GameObjects.GameObject[] = [shadow];
+    if (this.sprite) parts.push(this.sprite);
+    if (this.bodyRect) parts.push(this.bodyRect);
+    if (this.weapon) parts.push(this.weapon);
+    parts.push(barBg, this.hpFill);
+    this.add(parts);
     // Nearer ranks (larger y) draw in front of the ones behind them.
     this.setDepth(Math.round(this.y));
     scene.add.existing(this);
@@ -158,6 +180,25 @@ export class Unit extends Phaser.GameObjects.Container {
     return this.def.speed * (1 + (this.isBuffed ? this.buffAmount * BUFF_SPEED_SCALE : 0));
   }
 
+  /** Single place that decides body appearance, sprite or placeholder alike. */
+  private refreshBody(): void {
+    if (this.sprite) {
+      if (this.flashing) this.sprite.setTintFill(0xffffff);
+      else if (this.buffMs > 0) this.sprite.setTint(PALETTE.accent);
+      else this.sprite.clearTint();
+      return;
+    }
+    if (!this.bodyRect) return;
+
+    this.bodyRect.setFillStyle(this.flashing ? 0xffffff : this.displayTint);
+    const buffed = this.buffMs > 0;
+    this.bodyRect.setStrokeStyle(
+      buffed || this.def.elite ? 3 : 2,
+      buffed ? PALETTE.accent : this.def.elite ? 0xf2e6c8 : this.teamColor,
+      buffed || this.def.elite ? 1 : 0.9
+    );
+  }
+
   private refreshHpBar(): void {
     const ratio = Phaser.Math.Clamp(this.hp / this.def.maxHp, 0, 1);
     this.hpFill.width = (this.hpBarWidth - 2) * ratio;
@@ -181,9 +222,12 @@ export class Unit extends Phaser.GameObjects.Container {
     }
     Vfx.damageNumber(this.scene, this.x, this.headY, amount, color, emphasis);
 
-    this.bodyRect.setFillStyle(0xffffff);
+    this.flashing = true;
+    this.refreshBody();
     this.scene.time.delayedCall(60, () => {
-      if (!this.isDead) this.bodyRect.setFillStyle(this.displayTint);
+      if (this.isDead) return;
+      this.flashing = false;
+      this.refreshBody();
     });
 
     if (this.hp <= 0) this.die();
@@ -209,7 +253,7 @@ export class Unit extends Phaser.GameObjects.Container {
     if (this.isDead) return;
     this.buffAmount = amount;
     this.buffMs = durationMs;
-    this.bodyRect.setStrokeStyle(3, PALETTE.accent, 1);
+    this.refreshBody();
     Vfx.pulse(this.scene, this.x, this.y - this.def.height / 2, PALETTE.accent);
   }
 
@@ -262,13 +306,7 @@ export class Unit extends Phaser.GameObjects.Container {
 
     if (this.buffMs > 0) {
       this.buffMs -= dtMs;
-      if (this.buffMs <= 0) {
-        this.bodyRect.setStrokeStyle(
-          this.def.elite ? 3 : 2,
-          this.def.elite ? 0xf2e6c8 : this.teamColor,
-          this.def.elite ? 1 : 0.9
-        );
-      }
+      if (this.buffMs <= 0) this.refreshBody();
     }
 
     // Falling back means breaking off the fight. That is what makes it a decision.
@@ -382,14 +420,24 @@ export class Unit extends Phaser.GameObjects.Container {
       this.slam(ctx);
     }
 
-    // Lunge — sells the hit without any art.
-    this.scene.tweens.add({
-      targets: this.weapon,
-      x: this.facing * (this.def.radius + 16),
-      duration: 90,
-      yoyo: true,
-      ease: 'Quad.Out',
-    });
+    // Lunge — sells the hit. The placeholder swings its weapon; real art leans.
+    if (this.weapon) {
+      this.scene.tweens.add({
+        targets: this.weapon,
+        x: this.facing * (this.def.radius + 16),
+        duration: 90,
+        yoyo: true,
+        ease: 'Quad.Out',
+      });
+    } else if (this.sprite) {
+      this.scene.tweens.add({
+        targets: this.sprite,
+        x: this.facing * 9,
+        duration: 90,
+        yoyo: true,
+        ease: 'Quad.Out',
+      });
+    }
   }
 
   /**

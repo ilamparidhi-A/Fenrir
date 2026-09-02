@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from '../config/GameConfig';
+import { ALL_ASSETS } from '../config/Assets';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -18,7 +19,11 @@ export class PreloadScene extends Phaser.Scene {
       fill.width = barW * p;
     });
 
-    // No real assets yet — art drops into public/assets and gets loaded here.
+    // Art is optional. Anything listed in the manifest loads here; anything
+    // absent simply leaves the placeholder shapes in play.
+    for (const asset of ALL_ASSETS) {
+      this.load.image(asset.key, asset.path);
+    }
   }
 
   create(): void {

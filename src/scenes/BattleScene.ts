@@ -11,6 +11,7 @@ import { ALL_ABILITIES } from '../config/Abilities';
 import { ALL_UNIT_DEFS, BOSS_DEFS, HERO_RESPAWN_MS, SPEED_STEPS, THRALL_DEF } from '../config/Balance';
 import { FIRST_STAGE_ID, STAGES, STAGES_BY_ID, type StageDef } from '../config/Campaign';
 import { BIOMES, DEFAULT_BIOME } from '../config/Biomes';
+import { biomeLayerKey } from '../config/Assets';
 import {
   CAMERA_PAN_SPEED,
   CSS,
@@ -212,12 +213,23 @@ export class BattleScene extends Phaser.Scene {
     const biome = BIOMES[this.stage.biome] ?? BIOMES[DEFAULT_BIOME]!;
     this.cameras.main.setBackgroundColor(biome.sky);
 
-    // Atmospheric perspective, per biome: distant ridges hazier, near ones darker.
+    // Painted layers if the biome has art; vector ridges if it does not.
     let depth = -30;
-    for (const layer of biome.ridges) {
-      this.addRidge(depth, layer.color, layer.scrollFactor, layer.baseY, layer.amplitude, layer.phase);
+    biome.ridges.forEach((layer, i) => {
+      const key = biomeLayerKey(biome.id, i);
+
+      if (this.textures.exists(key)) {
+        this.add
+          .tileSprite(0, GROUND_Y, WORLD_WIDTH, 420, key)
+          .setOrigin(0, 1)
+          .setScrollFactor(layer.scrollFactor)
+          .setDepth(depth);
+      } else {
+        this.addRidge(depth, layer.color, layer.scrollFactor, layer.baseY, layer.amplitude, layer.phase);
+      }
+
       depth += 5;
-    }
+    });
 
     const skirtH = GAME_HEIGHT - GROUND_Y;
     this.add

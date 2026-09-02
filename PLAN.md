@@ -3,8 +3,8 @@
 Living tracker. Update checkboxes as things land; keep **Now** pointing at the one
 thing in flight.
 
-**Now:** Phase 5c — enemy commander AI, then achievements. Bosses, legendaries,
-campaign and map are all in.
+**Now:** Phase 6 — art. The pipeline is live and the spec is written
+([ASSETS.md](ASSETS.md)); generating and dropping in sprites is the work.
 
 **Genre:** Real-time strategy — specifically the *lane battler / tug-of-war RTS*
 subgenre (Epic War, Stick War, Age of War, Art of War: Legions). Ships under
@@ -203,12 +203,19 @@ The game is currently two screens. It needs eleven. Full inventory below.
 - [ ] Progress, mastery, discovery, and bragging tiers (CONTENT.md)
 - [ ] Achievement screen
 
-## Phase 6 — Art assets
+## Phase 6 — Art assets 🔨
 
 Tracked in the manifest below. Sequence: placeholders → validate the loop →
 commission. Never commission before validation.
 
-- [ ] Lock the art direction (one reference sheet before any commission)
+- [x] **Art pipeline live** — units and biomes take real art when present and fall
+      back to placeholder shapes when absent, so art lands one file at a time
+      without ever breaking the build
+- [x] Asset manifest (`config/Assets.ts`) — add a line, drop a PNG, done
+- [x] [ASSETS.md](ASSETS.md): locked style block, per-unit prompts, exact canvas
+      specs, tileable backdrop sizes, licensing and disclosure notes
+- [ ] Lock the art direction — generate the Militia first, keep it as the
+      reference image for every subsequent unit
 - [ ] Choose rig tool — Spine Essential $99 vs DragonBones free
 - [ ] Commission unit roster
 - [ ] Commission hero + boss rigs
