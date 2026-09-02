@@ -8,7 +8,7 @@ import { WaveScheduler } from '../systems/SpawnSystem';
 import { Vfx } from '../systems/Vfx';
 import { progression } from '../systems/Progression';
 import { ALL_ABILITIES } from '../config/Abilities';
-import { ALL_UNIT_DEFS, HERO_RESPAWN_MS, SPEED_STEPS, THRALL_DEF } from '../config/Balance';
+import { ALL_UNIT_DEFS, BOSS_DEFS, HERO_RESPAWN_MS, SPEED_STEPS, THRALL_DEF } from '../config/Balance';
 import { FIRST_STAGE_ID, STAGES, STAGES_BY_ID, type StageDef } from '../config/Campaign';
 import { BIOMES, DEFAULT_BIOME } from '../config/Biomes';
 import {
@@ -68,6 +68,8 @@ export class BattleScene extends Phaser.Scene {
   private stageId: string = FIRST_STAGE_ID;
   /** Where friendly units fell, and what they were. Feeds the Valkyrie. */
   private graveyard: { x: number; defId: string; ttl: number }[] = [];
+  private bossUnit: Unit | null = null;
+  private battleElapsedMs = 0;
   private panKeys?: Phaser.Input.Keyboard.Key[];
   private panKeysRight?: Phaser.Input.Keyboard.Key[];
   private dragging = false;
@@ -103,6 +105,8 @@ export class BattleScene extends Phaser.Scene {
     this.applyTimeScale();
     this.cooldowns.clear();
     this.graveyard = [];
+    this.bossUnit = null;
+    this.battleElapsedMs = 0;
     Unit.resetLanes();
 
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
@@ -291,15 +295,56 @@ export class BattleScene extends Phaser.Scene {
    * filtered out, so every death is seen exactly once.
    */
   private handleDeaths(): void {
+    const deaths: number[] = [];
+
     for (const u of this.playerUnits) {
-      if (!u.isDead || u === this.hero) continue;
+      if (!u.isDead) continue;
+      deaths.push(u.x);
+      if (u === this.hero) continue;
       // Thralls are already borrowed dead; they leave nothing to raise.
       if (u.def.id === THRALL_DEF.id) continue;
       this.graveyard.push({ x: u.x, defId: u.def.id, ttl: GRAVE_TTL_MS });
     }
 
     for (const e of this.enemyUnits) {
-      if (e.isDead) this.tryRaise(e.x);
+      if (!e.isDead) continue;
+      deaths.push(e.x);
+      this.tryRaise(e.x);
+    }
+
+    this.applyDeathAuras(deaths);
+  }
+
+  /** Bosses walk on partway through the fight, not at the opening bell. */
+  private updateBossEntry(): void {
+    const stage = this.stage;
+    if (!stage.boss || this.bossUnit) return;
+    if (this.battleElapsedMs < (stage.bossAtMs ?? 6000)) return;
+
+    const def = BOSS_DEFS[stage.boss];
+    if (!def) return;
+
+    this.bossUnit = this.spawnDef(def, ENEMY_CASTLE_X - 130, 'enemy');
+    this.cameras.main.shake(500, 0.012);
+    Vfx.banner(this, this.bossUnit.x, def.name.toUpperCase(), CSS.danger);
+    Vfx.shockwave(this, this.bossUnit.x, GROUND_Y - 40, 220, def.tint);
+  }
+
+  /**
+   * The Gorge. Anything dying inside its radius feeds it — including the chaff
+   * every other fight rewards you for spamming.
+   */
+  private applyDeathAuras(deaths: readonly number[]): void {
+    if (!deaths.length) return;
+
+    for (const u of [...this.playerUnits, ...this.enemyUnits]) {
+      const radius = u.def.traits?.healOnDeathRadius;
+      if (!radius || u.isDead) continue;
+
+      for (const x of deaths) {
+        if (Math.abs(u.x - x) > radius) continue;
+        u.heal(u.def.traits?.healOnDeathAmount ?? 50);
+      }
     }
   }
 
@@ -377,6 +422,11 @@ export class BattleScene extends Phaser.Scene {
 
   get enemyForces(): readonly Unit[] {
     return this.enemyUnits;
+  }
+
+  /** The stage boss once it has entered, for the HUD health bar. */
+  get boss(): Unit | null {
+    return this.bossUnit;
   }
 
   centerCameraOn(worldX: number): void {
@@ -621,7 +671,9 @@ export class BattleScene extends Phaser.Scene {
       if (remaining > 0) this.cooldowns.set(id, Math.max(0, remaining - dt));
     }
 
+    this.battleElapsedMs += dt;
     this.waves.update(dt, (id) => this.spawn(id, 'enemy'));
+    this.updateBossEntry();
 
     const playerCtx = {
       allies: this.playerUnits,
@@ -645,7 +697,9 @@ export class BattleScene extends Phaser.Scene {
     this.updateAuras(dt);
     this.updateHero(dt);
 
-    if (this.enemyCastle.isDestroyed) this.finish(true);
+    // On a boss stage, felling the boss ends it — no walk to the keep afterwards.
+    if (this.bossUnit?.isDead) this.finish(true);
+    else if (this.enemyCastle.isDestroyed) this.finish(true);
     else if (this.playerCastle.isDestroyed) this.finish(false);
   }
 

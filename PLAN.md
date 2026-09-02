@@ -3,8 +3,8 @@
 Living tracker. Update checkboxes as things land; keep **Now** pointing at the one
 thing in flight.
 
-**Now:** Phase 5b — boss entities (The Bulwark, The Executioner, The Gorge) and
-the four legendary units. Campaign scaffolding and the map are in.
+**Now:** Phase 5c — enemy commander AI, then achievements. Bosses, legendaries,
+campaign and map are all in.
 
 **Genre:** Real-time strategy — specifically the *lane battler / tug-of-war RTS*
 subgenre (Epic War, Stick War, Age of War, Art of War: Legions). Ships under
@@ -164,7 +164,7 @@ The game is currently two screens. It needs eleven. Full inventory below.
 - [ ] Credits screen (**required** if any CC-BY assets ship)
 - [ ] Onboarding: first-stage tutorial prompts
 
-## Phase 5 — Campaign & level design 🔨
+## Phase 5 — Campaign & level design ✅ (trials + survival pending)
 
 - [x] Stage definitions as **data** in `config/Campaign.ts` — no code change to add a level
 - [x] Stage schema: waves, biome, lair HP, rewards, unit unlocks, boss flag
@@ -173,7 +173,10 @@ The game is currently two screens. It needs eleven. Full inventory below.
       Niflheim. Sky, ground, and three parallax ridge layers per biome.
 - [x] Per-stage star records, stage gating, unit unlocks on first clear
 - [x] Save schema v2 with a working v1 migration
-- [ ] **3 puzzle bosses** as real entities — see the table above
+- [x] **3 puzzle bosses** as real entities — The Bulwark, The Executioner, The Gorge
+- [x] Boss traits: regeneration, toughest-target hunting, heal-on-nearby-death
+- [x] Bosses enter partway through the fight, with a banner and a HUD health bar
+- [x] Felling the boss wins the stage outright — no walk to the keep afterwards
 - [x] **4 legendary units** — Valkyrie, Reaper, Jötunn, Draugr Jarl (CONTENT.md)
 - [x] Data-driven `UnitTraits`: flight, execute, knockback, area slam, revive
       aura, raise-dead aura, lifespan. A legendary is a data entry, not a class.
@@ -186,7 +189,7 @@ The game is currently two screens. It needs eleven. Full inventory below.
 - [ ] Trial stages in Niflheim
 - [ ] Endless survival mode — a top request on the original
 
-## Phase 5c — Enemy commander AI ("battle IQ")
+## Phase 5c — Enemy commander AI ("battle IQ") 🔨
 
 - [ ] Counter-picking: the commander answers what you have been deploying
 - [ ] Fury budgeting so battles have surges and lulls, not a constant dribble
@@ -312,6 +315,7 @@ Verify commercial licence on every file — we ship on portals *and* an app stor
 | Scrolling world over fixed view | A battlefield that fits on one screen feels small. 2800px world with parallax and a minimap; the player decides where to look. |
 | The Gorge is the final boss | Ending on "restraint" is the hardest ask and the strongest note. Acts I and II teach composition and positioning first. |
 | Legendaries need signature mechanics | People remember Epic War's Lord of Hell, Angel, and Reaper because each did something unique — not because the numbers were big. A unit that is only "a knight with more HP" gets cut. |
+| Bosses are traits too | The Bulwark is regeneration + shielded armour; the Executioner is one targeting rule; the Gorge is one death-aura. Measured: 4 archers strip 31 HP from the Bulwark in 15s (-2 net dps against its regen), 4 mauls strip 1349 (-90 net dps). A 45x gap that no amount of upgrading closes — which is the pillar working. |
 | Legendaries are traits, not classes | Each is a `UnitTraits` entry on a normal `UnitDef`. Adding a fifth legendary is data. Verified: flight, execute, revive, raise and slam all work off that one system. |
 | Elites cannot be executed | The Reaper deleting a boss outright would make every boss fight trivial. Elites take 3x flat damage in place of the instant kill. |
 | Three ranks, not one file | Single-file queueing meant a 20-unit army had exactly one unit fighting, and it looked like a row of boxes. Lanes fix both the look and the maths. |

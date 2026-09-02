@@ -36,6 +36,13 @@ export interface UnitTraits {
   raiseRadius?: number;
   /** Expires after this long. Used by summoned units. */
   lifespanMs?: number;
+  /** Regenerates this much health per second. Chip damage will never win. */
+  regenPerSecond?: number;
+  /** Swings at the toughest thing in reach rather than the nearest. */
+  targetsHighestHp?: boolean;
+  /** Heals whenever ANY unit dies within this radius. */
+  healOnDeathRadius?: number;
+  healOnDeathAmount?: number;
 }
 
 /** Static, data-driven definition of a unit type. Balance lives in data, not code. */

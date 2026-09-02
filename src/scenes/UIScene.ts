@@ -53,6 +53,9 @@ export class UIScene extends Phaser.Scene {
   private furyFill!: Phaser.GameObjects.Rectangle;
   private furyText!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
+  private bossBarBg!: Phaser.GameObjects.Rectangle;
+  private bossBarFill!: Phaser.GameObjects.Rectangle;
+  private bossName!: Phaser.GameObjects.Text;
   private speedLabel!: Phaser.GameObjects.Text;
   private pauseLabel!: Phaser.GameObjects.Text;
   private pauseVeil!: Phaser.GameObjects.Rectangle;
@@ -87,6 +90,7 @@ export class UIScene extends Phaser.Scene {
     this.buildStanceBar();
     this.buildMinimap();
     this.buildTooltip();
+    this.buildBossBar();
 
     this.hint = this.add
       .text(GAME_WIDTH / 2, 78, '', {
@@ -102,6 +106,46 @@ export class UIScene extends Phaser.Scene {
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.45)
       .setDepth(-1)
       .setVisible(false);
+  }
+
+  /** Wide health bar for the stage boss. Hidden until one walks on. */
+  private buildBossBar(): void {
+    const w = 520;
+    const y = 108;
+
+    this.bossName = this.add
+      .text(GAME_WIDTH / 2, y - 18, '', {
+        fontFamily: 'Georgia, serif',
+        fontSize: '19px',
+        color: CSS.danger,
+      })
+      .setOrigin(0.5)
+      .setLetterSpacing(3)
+      .setVisible(false);
+
+    this.bossBarBg = this.add
+      .rectangle(GAME_WIDTH / 2 - w / 2, y + 6, w, 18, 0x000000, 0.7)
+      .setOrigin(0, 0.5)
+      .setStrokeStyle(2, PALETTE.enemy, 0.9)
+      .setVisible(false);
+
+    this.bossBarFill = this.add
+      .rectangle(GAME_WIDTH / 2 - w / 2 + 2, y + 6, 0, 14, PALETTE.enemy)
+      .setOrigin(0, 0.5)
+      .setVisible(false);
+  }
+
+  private updateBossBar(): void {
+    const boss = this.battle.boss;
+    const show = !!boss && !boss.isDead;
+
+    this.bossName.setVisible(show);
+    this.bossBarBg.setVisible(show);
+    this.bossBarFill.setVisible(show);
+    if (!boss || !show) return;
+
+    this.bossName.setText(boss.def.name.toUpperCase());
+    this.bossBarFill.width = 516 * Phaser.Math.Clamp(boss.hp / boss.def.maxHp, 0, 1);
   }
 
   private buildFuryBar(): void {
@@ -510,6 +554,7 @@ export class UIScene extends Phaser.Scene {
 
     this.updateAbilityButtons();
     this.updateCommandButtons();
+    this.updateBossBar();
     this.drawMinimap();
     this.updateHint();
   }

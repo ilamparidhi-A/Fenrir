@@ -20,6 +20,9 @@ export interface StageDef {
   reward: number;
   /** Unit id granted on first clear. */
   unlocks?: string;
+  /** Boss unit id, and when it enters. Killing it wins the stage outright. */
+  boss?: string;
+  bossAtMs?: number;
   waves: readonly WaveEntry[];
 }
 
@@ -101,6 +104,8 @@ export const STAGES: readonly StageDef[] = [
     name: 'The Bulwark',
     biome: 'ironwood',
     isBoss: true,
+    boss: 'bulwark',
+    bossAtMs: 6000,
     enemyLairHp: 1800,
     reward: 260,
     unlocks: 'valkyrie',
@@ -178,6 +183,8 @@ export const STAGES: readonly StageDef[] = [
     name: 'The Executioner',
     biome: 'coast',
     isBoss: true,
+    boss: 'executioner',
+    bossAtMs: 7000,
     enemyLairHp: 2600,
     reward: 380,
     unlocks: 'reaper',
@@ -253,6 +260,8 @@ export const STAGES: readonly StageDef[] = [
     name: 'The Gorge',
     biome: 'bifrost',
     isBoss: true,
+    boss: 'gorge',
+    bossAtMs: 8000,
     enemyLairHp: 4000,
     reward: 600,
     unlocks: 'draugr',

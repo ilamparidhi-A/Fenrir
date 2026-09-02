@@ -251,12 +251,88 @@ export const THRALL_DEF: UnitDef = {
   tint: 0x66794f,
 };
 
+
+/**
+ * Bosses. Each is a puzzle rather than a stat check: winnable at any upgrade
+ * level with the right tactic, unwinnable at every upgrade level with the wrong
+ * one. See the boss table in PLAN.md.
+ */
+export const BOSS_DEFS: Record<string, UnitDef> = {
+  // Act I. Arrows and spears bounce (pierce is 0.45x into shielded) and it
+  // out-regenerates chip damage, so the archer comfort composition simply cannot
+  // kill it. Answer: bring blunt.
+  bulwark: {
+    id: 'bulwark',
+    name: 'The Bulwark',
+    role: 'A wall that heals faster than arrows can chip it.',
+    cost: 0,
+    maxHp: 4200,
+    damage: 20,
+    attackRange: 62,
+    attackCooldown: 2000,
+    speed: 16,
+    radius: 34,
+    height: 112,
+    deployCooldown: 0,
+    damageType: 'blunt',
+    armorType: 'shielded',
+    elite: true,
+    traits: { regenPerSecond: 26 },
+    tint: 0xa8a293,
+  },
+
+  // Act II. Always swings at the toughest thing in reach — which is your
+  // champion. Answer: hold or fall back the hero and feed it cheap bodies.
+  executioner: {
+    id: 'executioner',
+    name: 'The Executioner',
+    role: 'Always swings at the strongest thing in reach.',
+    cost: 0,
+    maxHp: 3000,
+    damage: 135,
+    attackRange: 80,
+    attackCooldown: 2600,
+    speed: 30,
+    radius: 30,
+    height: 102,
+    deployCooldown: 0,
+    damageType: 'slash',
+    armorType: 'heavy',
+    elite: true,
+    traits: { targetsHighestHp: true, knockbackOnHit: 20 },
+    tint: 0xc4553f,
+  },
+
+  // Act III, final. Heals for every death in its radius, so the celebrated
+  // chaff-spam answer feeds it. Answer: deny it kills.
+  gorge: {
+    id: 'gorge',
+    name: 'The Gorge',
+    role: 'Every death near it makes it stronger.',
+    cost: 0,
+    maxHp: 5000,
+    damage: 62,
+    attackRange: 72,
+    attackCooldown: 1600,
+    speed: 22,
+    radius: 36,
+    height: 118,
+    deployCooldown: 0,
+    damageType: 'blunt',
+    armorType: 'heavy',
+    elite: true,
+    traits: { healOnDeathRadius: 250, healOnDeathAmount: 95 },
+    tint: 0x8e6ab0,
+  },
+};
+
 export const LEGENDARY_ROSTER: readonly string[] = ['valkyrie', 'reaper', 'jotunn', 'draugr'];
 
 /** Everything deployable, legendaries included. */
 export const ALL_UNIT_DEFS: Record<string, UnitDef> = {
   ...UNIT_DEFS,
   ...LEGENDARY_DEFS,
+  ...BOSS_DEFS,
   thrall: THRALL_DEF,
 };
 

@@ -253,6 +253,13 @@ export class Unit extends Phaser.GameObjects.Container {
       }
     }
 
+    // Regeneration. Chip damage from the wrong composition will never win.
+    const regen = this.def.traits?.regenPerSecond;
+    if (regen && this.hp < this.def.maxHp && !this.isDead) {
+      this.hp = Math.min(this.def.maxHp, this.hp + regen * (dtMs / 1000));
+      this.refreshHpBar();
+    }
+
     if (this.buffMs > 0) {
       this.buffMs -= dtMs;
       if (this.buffMs <= 0) {
@@ -295,18 +302,26 @@ export class Unit extends Phaser.GameObjects.Container {
     return Math.abs(x - this.x);
   }
 
-  /** Nearest living enemy ahead of (or overlapping) this unit, within range. */
+  /**
+   * Nearest living enemy ahead of (or overlapping) this unit, within range —
+   * unless this unit hunts the toughest thing it can see instead, which is what
+   * makes the Executioner a threat to your champion specifically.
+   */
   private findTarget(enemies: readonly Unitish[]): Unitish | null {
+    const huntToughest = this.def.traits?.targetsHighestHp === true;
     let best: Unitish | null = null;
-    let bestDist = Infinity;
+    let bestScore = huntToughest ? -Infinity : Infinity;
 
     for (const e of enemies) {
       if (e.isDead) continue;
       const ahead = (e.x - this.x) * this.facing;
       if (ahead < -this.def.radius) continue; // already behind us
       const dist = Math.abs(e.x - this.x);
-      if (dist <= this.def.attackRange && dist < bestDist) {
-        bestDist = dist;
+      if (dist > this.def.attackRange) continue;
+
+      const score = huntToughest ? (e as Unit).hp : dist;
+      if (huntToughest ? score > bestScore : score < bestScore) {
+        bestScore = score;
         best = e;
       }
     }
